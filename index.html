@@ -81,12 +81,17 @@
       
       <div class="flex items-center gap-4">
         <div id="sync-status" class="text-xs font-medium text-slate-400 flex items-center gap-1">
-          <i class="ph-bold ph-cloud-check text-lg"></i> Local
+          <i class="ph-bold ph-hard-drives text-lg"></i> Local
         </div>
         <div class="flex items-center bg-white border border-slate-200 rounded-lg shadow-sm p-1">
           <button onclick="changeWeek(-1)" class="p-1.5 hover:bg-slate-100 rounded-md transition-colors text-slate-600">
-          <i class="ph ph-caret-right text-lg"></i>
-        </button>
+            <i class="ph ph-caret-left text-lg"></i>
+          </button>
+          <span class="text-sm font-semibold w-24 text-center text-slate-800" id="week-label">Semaine 1</span>
+          <button onclick="changeWeek(1)" class="p-1.5 hover:bg-slate-100 rounded-md transition-colors text-slate-600">
+            <i class="ph ph-caret-right text-lg"></i>
+          </button>
+        </div>
       </div>
     </header>
 
@@ -372,55 +377,72 @@ let weekNum=1;
 let state={};
 let syncTimeout = null;
 
-let gData={topics:[
-  'Pourquoi ton Canva fait fuir tes clients premium',
-  'Le détail visuel qui décide si on te prend au sérieux',
-  'Ce que ta palette de couleurs dit de toi sans que tu le saches',
-],prospects:[],projects:[],bilanHistory:[]};
+let gData={topics:[],prospects:[],projects:[],bilanHistory:[]};
 
 function key(week){return'week_'+week;}
+
+function ensureStateValid() {
+  if (!state) state = {};
+  if (!state.tasks) state.tasks = {};
+  if (!state.kpis) state.kpis = {posts:0,msgs:0,replies:0,calls:0,late:0};
+  if (!state.bilans) state.bilans = [];
+  
+  if (!gData) gData = {};
+  if (!gData.topics) gData.topics = [];
+  if (!gData.prospects) gData.prospects = [];
+  if (!gData.projects) gData.projects = [];
+  if (!gData.bilanHistory) gData.bilanHistory = [];
+}
+
+function loadLocalData(week) {
+  try{const d=localStorage.getItem('bd_global');if(d)gData=JSON.parse(d);}catch{}
+  try{const s=localStorage.getItem(key(week));if(s)state=JSON.parse(s);}catch{}
+  ensureStateValid();
+}
 
 function setSyncStatus(status) {
   const el = document.getElementById('sync-status');
   if(!el) return;
-  if(status === 'saving') el.innerHTML = '<i class="ph-bold ph-arrows-clockwise animate-spin text-brand text-lg"></i> <span class="text-brand">Sauvegarde...</span>';
-  else if(status === 'error') el.innerHTML = '<i class="ph-bold ph-warning-circle text-danger text-lg"></i> <span class="text-danger">Erreur Sync</span>';
-  else el.innerHTML = '<i class="ph-bold ph-cloud-check text-success text-lg"></i> <span class="text-success">Synchronisé</span>';
+  if(status === 'saving') el.innerHTML = '<i class="ph-bold ph-arrows-clockwise animate-spin text-brand text-lg"></i> <span class="text-brand">Synchro...</span>';
+  else if(status === 'local') el.innerHTML = '<i class="ph-bold ph-hard-drives text-slate-500 text-lg"></i> <span class="text-slate-500">Mode Local</span>';
+  else el.innerHTML = '<i class="ph-bold ph-cloud-check text-success text-lg"></i> <span class="text-success">Cloud Sync</span>';
 }
 
 async function dbRequest(action, payload) {
   if(!SCRIPT_URL) return null;
   try {
-    // Utilisation de text/plain pour éviter le blocage CORS preflight natif de Google Script
     const res = await fetch(SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action, ...payload })
+      body: JSON.stringify({ action, ...payload }),
+      redirect: 'follow'
     });
+    if (!res.ok) return null;
     return await res.json();
   } catch(e) {
-    console.error("Erreur DB:", e);
-    setSyncStatus('error');
+    // Remplacé par un simple warning au lieu d'une erreur bloquante
+    console.warn("Connexion Google Script échouée, passage en mode local.");
     return null;
   }
 }
 
 function triggerSave() {
+  // Sauvegarde systématique dans le navigateur comme filet de sécurité
+  try{localStorage.setItem(key(weekNum),JSON.stringify(state));}catch{}
+  try{localStorage.setItem('bd_global',JSON.stringify(gData));}catch{}
+
   if(!SCRIPT_URL) {
-    // Mode hors-ligne / fallback si l'URL n'est pas configurée
-    try{localStorage.setItem(key(weekNum),JSON.stringify(state));}catch{}
-    try{localStorage.setItem('bd_global',JSON.stringify(gData));}catch{}
+    setSyncStatus('local');
     return;
   }
   
   setSyncStatus('saving');
   clearTimeout(syncTimeout);
   
-  // Sauvegarde "debouncée" (attend 1.5s après la dernière action pour ne pas spammer le serveur Google)
   syncTimeout = setTimeout(async () => {
     const res = await dbRequest('save', { globalData: gData, weekKey: key(weekNum), weekData: state });
     if(res && res.success) setSyncStatus('saved');
-    else setSyncStatus('error');
+    else setSyncStatus('local'); // Si erreur, on indique qu'on est en local
   }, 1500);
 }
 
@@ -428,23 +450,35 @@ function saveState() { triggerSave(); }
 function saveGlobal() { triggerSave(); }
 
 async function loadAllData(week) {
+  // 1. On initialise toujours une structure propre par défaut
+  state = {tasks:{},kpis:{posts:0,msgs:0,replies:0,calls:0,late:0},bilans:[]};
+  ensureStateValid();
+  
   if(!SCRIPT_URL) {
-    // Mode hors-ligne / fallback
-    try{const d=localStorage.getItem('bd_global');if(d)gData=JSON.parse(d);}catch{}
-    try{const s=localStorage.getItem(key(week));state=s?JSON.parse(s):{tasks:{},kpis:{posts:0,msgs:0,replies:0,calls:0,late:0},bilans:[]};}
-    catch{state={tasks:{},kpis:{posts:0,msgs:0,replies:0,calls:0,late:0},bilans:[]};}
+    loadLocalData(week);
+    setSyncStatus('local');
     return;
   }
   
   setSyncStatus('saving');
   const res = await dbRequest('load', { weekKey: key(week) });
+  
   if(res) {
     if(res.globalData) gData = res.globalData;
     if(res.weekData) state = res.weekData;
-    else state = {tasks:{},kpis:{posts:0,msgs:0,replies:0,calls:0,late:0},bilans:[]};
+    setSyncStatus('saved');
+  } else {
+    // Si la requête plante (CORS, réseau), on bascule sur les données du navigateur
+    loadLocalData(week);
+    setSyncStatus('local');
   }
-  if(!gData.topics || gData.topics.length === 0) gData.topics = ['Pourquoi ton Canva fait fuir tes clients premium','Le détail visuel qui décide si on te prend au sérieux'];
-  setSyncStatus('saved');
+  
+  ensureStateValid();
+  
+  // Peuplement par défaut si vide
+  if(!gData.topics || gData.topics.length === 0) {
+     gData.topics = ['Pourquoi ton Canva fait fuir tes clients premium','Le détail visuel qui décide si on te prend au sérieux'];
+  }
 }
 
 async function changeWeek(d){
@@ -464,7 +498,8 @@ function renderTasks(containerId,tasks){
   const el=document.getElementById(containerId);
   el.innerHTML='';
   tasks.forEach(t=>{
-    const done=!!state.tasks[t.id];
+    // Sécurité au cas où state.tasks serait mystérieusement réinitialisé
+    const done = state.tasks ? !!state.tasks[t.id] : false;
     const d=document.createElement('div');
     d.className=`flex items-center gap-3 p-3 rounded-xl border ${done ? 'bg-slate-50 border-slate-100 opacity-60' : 'bg-white border-slate-200 hover:border-brand/30 hover:shadow-sm'} cursor-pointer transition-all select-none group`;
     d.onclick=()=>toggleTask(t.id);
