@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brand Designer OS</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: '#4f46e5', // Indigo 600
+            brandHover: '#4338ca', // Indigo 700
+            success: '#10b981', // Emerald 500
+            warn: '#f59e0b', // Amber 500
+            danger: '#ef4444', // Red 500
+            surface: '#f9fafb', // Gray 50
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar for tables */
+    .custom-scrollbar::-webkit-scrollbar {
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    
+    /* Transitions */
+    .fade-in {
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Hide sections by default */
+    .section { display: none; }
+    .section.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans antialiased min-h-screen pb-12">
+
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <!-- HEADER -->
+    <header class="py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-brand text-white rounded-xl flex items-center justify-center shadow-sm">
+          <i class="ph ph-paint-brush-broad text-xl"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-semibold tracking-tight">Brand Designer OS</h1>
+          <p class="text-sm text-slate-500 font-medium">Système d'organisation professionnel</p>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-4">
+        <div id="sync-status" class="text-xs font-medium text-slate-400 flex items-center gap-1">
+          <i class="ph-bold ph-cloud-check text-lg"></i> Local
+        </div>
+        <div class="flex items-center bg-white border border-slate-200 rounded-lg shadow-sm p-1">
+          <button onclick="changeWeek(-1)" class="p-1.5 hover:bg-slate-100 rounded-md transition-colors text-slate-600">
+          <i class="ph ph-caret-right text-lg"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- TABS -->
+    <nav class="flex overflow-x-auto custom-scrollbar gap-2 mb-8 bg-slate-100/50 p-1 rounded-xl border border-slate-200/50 w-fit">
+      <button class="tab active px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200" onclick="showTab('dashboard', this)">
+        <i class="ph ph-squares-four mr-2 align-middle text-lg"></i>Dashboard
+      </button>
+      <button class="tab px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 text-slate-600 hover:text-slate-900 hover:bg-slate-200/50" onclick="showTab('contenu', this)">
+        <i class="ph ph-pen-nib mr-2 align-middle text-lg"></i>Contenu
+      </button>
+      <button class="tab px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 text-slate-600 hover:text-slate-900 hover:bg-slate-200/50" onclick="showTab('prospection', this)">
+        <i class="ph ph-target mr-2 align-middle text-lg"></i>Prospection
+      </button>
+      <button class="tab px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 text-slate-600 hover:text-slate-900 hover:bg-slate-200/50" onclick="showTab('clients', this)">
+        <i class="ph ph-users mr-2 align-middle text-lg"></i>Clients
+      </button>
+      <button class="tab px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 text-slate-600 hover:text-slate-900 hover:bg-slate-200/50" onclick="showTab('bilan', this)">
+        <i class="ph ph-chart-line-up mr-2 align-middle text-lg"></i>Bilan hebdo
+      </button>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main>
+      
+      <!-- DASHBOARD -->
+      <div class="section active" id="tab-dashboard">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2"><i class="ph-fill ph-pen text-brand"></i> Posts publiés</div>
+            <div class="text-4xl font-bold text-slate-900" id="kpi-posts">0</div>
+            <div class="text-xs text-slate-500 mt-2 font-medium">Objectif : 3/semaine</div>
+            <div class="h-1.5 bg-slate-100 rounded-full mt-4 overflow-hidden">
+              <div class="h-full bg-success rounded-full transition-all duration-500 ease-out" id="bar-posts" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2"><i class="ph-fill ph-paper-plane-right text-brand"></i> Messages envoyés</div>
+            <div class="text-4xl font-bold text-slate-900" id="kpi-msgs">0</div>
+            <div class="text-xs text-slate-500 mt-2 font-medium">Objectif : 10/semaine</div>
+            <div class="h-1.5 bg-slate-100 rounded-full mt-4 overflow-hidden">
+              <div class="h-full bg-brand rounded-full transition-all duration-500 ease-out" id="bar-msgs" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2"><i class="ph-fill ph-warning-circle text-danger"></i> Projets en retard</div>
+            <div class="text-4xl font-bold text-slate-900" id="kpi-late">0</div>
+            <div class="text-xs text-slate-500 mt-2 font-medium">Objectif : 0</div>
+            <div class="h-1.5 bg-slate-100 rounded-full mt-4 overflow-hidden">
+              <div class="h-full bg-danger rounded-full transition-all duration-500 ease-out" id="bar-late" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Réponses prospects</div>
+            <div class="text-4xl font-bold text-slate-900" id="kpi-replies">0</div>
+            <div class="text-xs text-slate-500 mt-2 font-medium">Objectif : 3+/semaine</div>
+            <div class="h-1.5 bg-slate-100 rounded-full mt-4 overflow-hidden">
+              <div class="h-full bg-warn rounded-full transition-all duration-500 ease-out" id="bar-replies" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Appels bookés</div>
+            <div class="text-4xl font-bold text-slate-900" id="kpi-calls">0</div>
+            <div class="text-xs text-slate-500 mt-2 font-medium">Objectif : 1/semaine</div>
+            <div class="h-1.5 bg-slate-100 rounded-full mt-4 overflow-hidden">
+              <div class="h-full bg-success rounded-full transition-all duration-500 ease-out" id="bar-calls" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <h3 class="text-sm font-semibold text-slate-900 mb-6 flex items-center gap-2">
+            <i class="ph-fill ph-chart-donut text-brand text-lg"></i> Avancement des piliers
+          </h3>
+          <div id="pillar-progress" class="space-y-4"></div>
+        </div>
+      </div>
+
+      <!-- CONTENU -->
+      <div class="section" id="tab-contenu">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm h-fit">
+            <div class="flex items-center gap-3 mb-6">
+              <div class="w-8 h-8 rounded-lg bg-success/10 text-success flex items-center justify-center">
+                <i class="ph-fill ph-check-circle text-xl"></i>
+              </div>
+              <h3 class="text-base font-semibold text-slate-900">Checklist Batch Day</h3>
+            </div>
+            <div class="flex flex-col gap-2" id="content-tasks"></div>
+          </div>
+          
+          <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+            <div class="flex items-center gap-3 mb-6">
+              <div class="w-8 h-8 rounded-lg bg-brand/10 text-brand flex items-center justify-center">
+                <i class="ph-fill ph-lightbulb text-xl"></i>
+              </div>
+              <h3 class="text-base font-semibold text-slate-900">Banque de sujets</h3>
+            </div>
+            
+            <div class="flex gap-2 mb-6">
+              <input type="text" id="new-topic" class="flex-1 bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-brand focus:border-brand block p-2.5 transition-colors" placeholder="Ex : Pourquoi ton Canva fait fuir tes clients...">
+              <button onclick="addTopic()" class="text-white bg-brand hover:bg-brandHover font-medium rounded-lg text-sm px-4 py-2.5 transition-colors flex items-center gap-2 shadow-sm">
+                <i class="ph ph-plus-circle text-lg"></i> Ajouter
+              </button>
+            </div>
+            
+            <div id="topic-list" class="flex flex-col gap-2"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROSPECTION -->
+      <div class="section" id="tab-prospection">
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm mb-6">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-8 h-8 rounded-lg bg-brand/10 text-brand flex items-center justify-center">
+              <i class="ph-fill ph-target text-xl"></i>
+            </div>
+            <h3 class="text-base font-semibold text-slate-900">Checklist Prospection</h3>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2" id="prospect-tasks"></div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+          <div class="p-6 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
+                <i class="ph-fill ph-address-book text-xl"></i>
+              </div>
+              <h3 class="text-base font-semibold text-slate-900">CRM Prospects</h3>
+            </div>
+            <button onclick="addProspect()" class="text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 font-medium rounded-lg text-sm px-4 py-2 transition-colors flex items-center gap-2 shadow-sm">
+              <i class="ph ph-user-plus text-lg"></i> Nouveau prospect
+            </button>
+          </div>
+          <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-sm text-left text-slate-500">
+              <thead class="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th scope="col" class="px-6 py-4 font-semibold">Nom</th>
+                  <th scope="col" class="px-6 py-4 font-semibold">Plateforme</th>
+                  <th scope="col" class="px-6 py-4 font-semibold">Type</th>
+                  <th scope="col" class="px-6 py-4 font-semibold">Statut</th>
+                  <th scope="col" class="px-6 py-4 font-semibold">Note</th>
+                  <th scope="col" class="px-6 py-4"></th>
+                </tr>
+              </thead>
+              <tbody id="prospect-tbody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLIENTS -->
+      <div class="section" id="tab-clients">
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm mb-6">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-8 h-8 rounded-lg bg-warn/10 text-warn flex items-center justify-center">
+              <i class="ph-fill ph-handshake text-xl"></i>
+            </div>
+            <h3 class="text-base font-semibold text-slate-900">Checklist Suivi Client</h3>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2" id="client-tasks"></div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
+                <i class="ph-fill ph-folder-open text-xl"></i>
+              </div>
+              <h3 class="text-base font-semibold text-slate-900">Projets actifs</h3>
+            </div>
+            <button onclick="addProject()" class="text-white bg-slate-900 hover:bg-slate-800 font-medium rounded-lg text-sm px-4 py-2 transition-colors flex items-center gap-2 shadow-sm">
+              <i class="ph ph-folder-plus text-lg"></i> Nouveau projet
+            </button>
+          </div>
+          <div id="project-list" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
+        </div>
+      </div>
+
+      <!-- BILAN -->
+      <div class="section" id="tab-bilan">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center text-center">
+            <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Score de la semaine</div>
+            <div class="text-6xl font-bold tracking-tight mb-2" id="bilan-score">—</div>
+            <div class="text-sm text-slate-500 font-medium">KPIs atteints sur le total</div>
+          </div>
+          
+          <div class="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+            <h3 class="text-sm font-semibold text-slate-900 mb-4 flex items-center gap-2">
+              <i class="ph-fill ph-faders text-brand text-lg"></i> Saisir les KPIs réels
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+              <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
+                <span class="text-sm font-medium text-slate-700">Posts publiés</span>
+                <input type="number" id="inp-posts" min="0" max="10" value="0" onchange="calcBilan()" class="w-16 bg-white border border-slate-200 text-slate-900 text-sm rounded-md focus:ring-brand focus:border-brand p-1.5 text-center shadow-sm">
+              </div>
+              <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
+                <span class="text-sm font-medium text-slate-700">Msgs envoyés</span>
+                <input type="number" id="inp-msgs" min="0" max="50" value="0" onchange="calcBilan()" class="w-16 bg-white border border-slate-200 text-slate-900 text-sm rounded-md focus:ring-brand focus:border-brand p-1.5 text-center shadow-sm">
+              </div>
+              <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
+                <span class="text-sm font-medium text-slate-700">Réponses</span>
+                <input type="number" id="inp-replies" min="0" max="20" value="0" onchange="calcBilan()" class="w-16 bg-white border border-slate-200 text-slate-900 text-sm rounded-md focus:ring-brand focus:border-brand p-1.5 text-center shadow-sm">
+              </div>
+              <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
+                <span class="text-sm font-medium text-slate-700">Appels bookés</span>
+                <input type="number" id="inp-calls" min="0" max="10" value="0" onchange="calcBilan()" class="w-16 bg-white border border-slate-200 text-slate-900 text-sm rounded-md focus:ring-brand focus:border-brand p-1.5 text-center shadow-sm">
+              </div>
+              <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100 sm:col-span-2">
+                <span class="text-sm font-medium text-slate-700">Projets en retard</span>
+                <input type="number" id="inp-late" min="0" max="10" value="0" onchange="calcBilan()" class="w-16 bg-white border border-slate-200 text-slate-900 text-sm rounded-md focus:ring-brand focus:border-brand p-1.5 text-center shadow-sm">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+            <h3 class="text-base font-semibold text-slate-900 mb-6 flex items-center gap-2">
+              <i class="ph-fill ph-notebook text-brand text-lg"></i> Analyse & Notes
+            </h3>
+            
+            <label class="block mb-1.5 text-sm font-medium text-slate-700">Ce qui a fonctionné :</label>
+            <textarea id="note-wins" rows="2" class="block w-full p-3 mb-4 text-sm text-slate-900 bg-slate-50 rounded-lg border border-slate-200 focus:ring-brand focus:border-brand transition-colors" placeholder="Ex : Le post sur le branding Canva a généré 3 DMs..."></textarea>
+            
+            <label class="block mb-1.5 text-sm font-medium text-slate-700">Ce qui bloque :</label>
+            <textarea id="note-blocks" rows="2" class="block w-full p-3 mb-4 text-sm text-slate-900 bg-slate-50 rounded-lg border border-slate-200 focus:ring-brand focus:border-brand transition-colors" placeholder="Ex : Toujours pas lancé la prospection froide..."></textarea>
+            
+            <label class="block mb-1.5 text-sm font-medium text-slate-700">Action prioritaire semaine prochaine :</label>
+            <textarea id="note-next" rows="2" class="block w-full p-3 mb-6 text-sm text-slate-900 bg-brand/5 border border-brand/20 rounded-lg focus:ring-brand focus:border-brand transition-colors" placeholder="Ex : Envoyer 4 messages lundi matin avant 10h..."></textarea>
+            
+            <div class="flex justify-end">
+              <button id="save-btn" onclick="saveBilan()" class="text-white bg-brand hover:bg-brandHover font-medium rounded-lg text-sm px-5 py-2.5 transition-colors flex items-center gap-2 shadow-sm">
+                Sauvegarder le bilan <i class="ph ph-arrow-up-right font-bold"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+            <h3 class="text-base font-semibold text-slate-900 mb-6 flex items-center gap-2">
+              <i class="ph-fill ph-clock-counter-clockwise text-slate-500 text-lg"></i> Historique
+            </h3>
+            <div id="bilan-history" class="space-y-3"></div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+<script>
+// Logic core remains identical, only HTML templates in JS are modified for Tailwind
+const CONTENT_TASKS=[
+  {id:'c1',label:'Piocher 3 sujets dans la banque',meta:'Lundi'},
+  {id:'c2',label:'Rédiger les 3 posts (draft IA)',meta:'Mardi matin'},
+  {id:'c3',label:'Créer les visuels (Canva/Figma)',meta:'Mardi'},
+  {id:'c4',label:'Planifier sur Buffer / Metricool',meta:'Mardi soir'},
+  {id:'c5',label:'Vérifier les stats de la semaine précédente',meta:'Lundi 10 min'},
+];
+const PROSPECT_TASKS=[
+  {id:'p1',label:'Session prospection (4 msgs)',meta:'Lundi matin'},
+  {id:'p2',label:'Session prospection (3 msgs)',meta:'Mercredi matin'},
+  {id:'p3',label:'Session prospection (3 msgs)',meta:'Vendredi matin'},
+  {id:'p4',label:'Mettre à jour le CRM',meta:'Vendredi'},
+  {id:'p5',label:'Suivre les réponses en cours',meta:'Chaque jour'},
+];
+const CLIENT_TASKS=[
+  {id:'cl1',label:'Vérifier les deadlines (Notion)',meta:'Lundi 5 min'},
+  {id:'cl2',label:'Envoyer brief ou relance',meta:'Dès que requis'},
+  {id:'cl3',label:'Livraison : vérifier checklist',meta:'Avant envoi'},
+  {id:'cl4',label:'Demander témoignage',meta:'J+9'},
+];
+
+const SCRIPT_URL = ''; // ⚠️ COLLEZ ICI L'URL DE VOTRE WEB APP GOOGLE SCRIPT (Ex: https://script.google.com/macros/s/AKfycby.../exec)
+
+let weekNum=1;
+let state={};
+let syncTimeout = null;
+
+let gData={topics:[
+  'Pourquoi ton Canva fait fuir tes clients premium',
+  'Le détail visuel qui décide si on te prend au sérieux',
+  'Ce que ta palette de couleurs dit de toi sans que tu le saches',
+],prospects:[],projects:[],bilanHistory:[]};
+
+function key(week){return'week_'+week;}
+
+function setSyncStatus(status) {
+  const el = document.getElementById('sync-status');
+  if(!el) return;
+  if(status === 'saving') el.innerHTML = '<i class="ph-bold ph-arrows-clockwise animate-spin text-brand text-lg"></i> <span class="text-brand">Sauvegarde...</span>';
+  else if(status === 'error') el.innerHTML = '<i class="ph-bold ph-warning-circle text-danger text-lg"></i> <span class="text-danger">Erreur Sync</span>';
+  else el.innerHTML = '<i class="ph-bold ph-cloud-check text-success text-lg"></i> <span class="text-success">Synchronisé</span>';
+}
+
+async function dbRequest(action, payload) {
+  if(!SCRIPT_URL) return null;
+  try {
+    // Utilisation de text/plain pour éviter le blocage CORS preflight natif de Google Script
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action, ...payload })
+    });
+    return await res.json();
+  } catch(e) {
+    console.error("Erreur DB:", e);
+    setSyncStatus('error');
+    return null;
+  }
+}
+
+function triggerSave() {
+  if(!SCRIPT_URL) {
+    // Mode hors-ligne / fallback si l'URL n'est pas configurée
+    try{localStorage.setItem(key(weekNum),JSON.stringify(state));}catch{}
+    try{localStorage.setItem('bd_global',JSON.stringify(gData));}catch{}
+    return;
+  }
+  
+  setSyncStatus('saving');
+  clearTimeout(syncTimeout);
+  
+  // Sauvegarde "debouncée" (attend 1.5s après la dernière action pour ne pas spammer le serveur Google)
+  syncTimeout = setTimeout(async () => {
+    const res = await dbRequest('save', { globalData: gData, weekKey: key(weekNum), weekData: state });
+    if(res && res.success) setSyncStatus('saved');
+    else setSyncStatus('error');
+  }, 1500);
+}
+
+function saveState() { triggerSave(); }
+function saveGlobal() { triggerSave(); }
+
+async function loadAllData(week) {
+  if(!SCRIPT_URL) {
+    // Mode hors-ligne / fallback
+    try{const d=localStorage.getItem('bd_global');if(d)gData=JSON.parse(d);}catch{}
+    try{const s=localStorage.getItem(key(week));state=s?JSON.parse(s):{tasks:{},kpis:{posts:0,msgs:0,replies:0,calls:0,late:0},bilans:[]};}
+    catch{state={tasks:{},kpis:{posts:0,msgs:0,replies:0,calls:0,late:0},bilans:[]};}
+    return;
+  }
+  
+  setSyncStatus('saving');
+  const res = await dbRequest('load', { weekKey: key(week) });
+  if(res) {
+    if(res.globalData) gData = res.globalData;
+    if(res.weekData) state = res.weekData;
+    else state = {tasks:{},kpis:{posts:0,msgs:0,replies:0,calls:0,late:0},bilans:[]};
+  }
+  if(!gData.topics || gData.topics.length === 0) gData.topics = ['Pourquoi ton Canva fait fuir tes clients premium','Le détail visuel qui décide si on te prend au sérieux'];
+  setSyncStatus('saved');
+}
+
+async function changeWeek(d){
+  weekNum=Math.max(1,weekNum+d);
+  document.getElementById('week-label').textContent='Semaine '+weekNum;
+  await loadAllData(weekNum);
+  renderAll();
+}
+
+function toggleTask(id){
+  state.tasks[id]=!state.tasks[id];
+  saveState();
+  renderAll();
+}
+
+function renderTasks(containerId,tasks){
+  const el=document.getElementById(containerId);
+  el.innerHTML='';
+  tasks.forEach(t=>{
+    const done=!!state.tasks[t.id];
+    const d=document.createElement('div');
+    d.className=`flex items-center gap-3 p-3 rounded-xl border ${done ? 'bg-slate-50 border-slate-100 opacity-60' : 'bg-white border-slate-200 hover:border-brand/30 hover:shadow-sm'} cursor-pointer transition-all select-none group`;
+    d.onclick=()=>toggleTask(t.id);
+    
+    d.innerHTML=`
+      <div class="w-5 h-5 rounded flex-shrink-0 border flex items-center justify-center transition-colors ${done ? 'bg-success border-success text-white' : 'border-slate-300 group-hover:border-brand text-transparent'}">
+        <i class="ph-bold ph-check text-xs"></i>
+      </div>
+      <span class="text-sm font-medium flex-1 ${done ? 'line-through text-slate-500' : 'text-slate-700'}">${t.label}</span>
+      <span class="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded-md whitespace-nowrap">${t.meta}</span>
+    `;
+    el.appendChild(d);
+  });
+}
+
+function renderTopics(){
+  const el=document.getElementById('topic-list');
+  el.innerHTML='';
+  if(gData.topics.length === 0) {
+    el.innerHTML = '<div class="text-sm text-slate-400 p-4 text-center border border-dashed border-slate-200 rounded-lg">Aucun sujet dans la banque.</div>';
+    return;
+  }
+  gData.topics.forEach((t,i)=>{
+    const d=document.createElement('div');
+    d.className='flex items-center gap-3 p-3 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-xl text-sm transition-colors group';
+    d.innerHTML=`
+      <i class="ph ph-text-align-left text-slate-400"></i>
+      <span class="flex-1 text-slate-700 font-medium">${t}</span>
+      <button class="text-slate-400 hover:text-danger opacity-0 group-hover:opacity-100 transition-all p-1" onclick="delTopic(${i})">
+        <i class="ph-bold ph-trash text-lg"></i>
+      </button>
+    `;
+    el.appendChild(d);
+  });
+}
+
+function addTopic(){
+  const inp=document.getElementById('new-topic');
+  if(!inp.value.trim())return;
+  gData.topics.unshift(inp.value.trim());
+  inp.value='';
+  saveGlobal();
+  renderTopics();
+}
+function delTopic(i){gData.topics.splice(i,1);saveGlobal();renderTopics();}
+
+function renderProspects(){
+  const tb=document.getElementById('prospect-tbody');
+  tb.innerHTML='';
+  if(gData.prospects.length === 0) {
+    tb.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-slate-500 text-sm">Aucun prospect enregistré.</td></tr>';
+    return;
+  }
+  gData.prospects.forEach((p,i)=>{
+    const typeLabel={'warm':'Signal chaud','froid':'Froid','reac':'Réactivation'}[p.type]||p.type;
+    const typeClass={'warm':'bg-orange-100 text-orange-800','froid':'bg-blue-100 text-blue-800','reac':'bg-emerald-100 text-emerald-800'}[p.type]||'bg-slate-100 text-slate-800';
+    
+    const statDot={'new':'bg-brand','contact':'bg-warn','replied':'bg-success','booked':'bg-success','closed':'bg-danger'}[p.status]||'bg-slate-400';
+    const statLabel={'new':'À contacter','contact':'Contacté','replied':'A répondu','booked':'Appel booké','closed':'Fermé'}[p.status]||p.status;
+    
+    const tr=document.createElement('tr');
+    tr.className = "hover:bg-slate-50/80 transition-colors group";
+    tr.innerHTML=`
+      <td class="px-6 py-4 font-medium text-slate-900">${p.name}</td>
+      <td class="px-6 py-4 text-slate-500"><div class="flex items-center gap-1.5"><i class="ph ph-${p.platform.toLowerCase() === 'instagram' ? 'instagram-logo' : p.platform.toLowerCase() === 'linkedin' ? 'linkedin-logo' : 'globe'} text-lg"></i> ${p.platform}</div></td>
+      <td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${typeClass}">${typeLabel}</span></td>
+      <td class="px-6 py-4"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full ${statDot}"></span> <span class="font-medium text-slate-700">${statLabel}</span></div></td>
+      <td class="px-6 py-4 text-slate-500 max-w-xs truncate" title="${p.note||''}">${p.note||'—'}</td>
+      <td class="px-6 py-4 text-right">
+        <button class="text-slate-400 hover:text-danger opacity-0 group-hover:opacity-100 transition-opacity" onclick="delProspect(${i})"><i class="ph-bold ph-trash text-lg"></i></button>
+      </td>
+    `;
+    tb.appendChild(tr);
+  });
+}
+
+function addProspect(){
+  const name=prompt('Nom du prospect ?');if(!name)return;
+  const platform=prompt('Plateforme ? (Instagram / LinkedIn / Autre)')||'Instagram';
+  const type=prompt('Type ? (warm / froid / reac)')||'froid';
+  gData.prospects.unshift({name,platform,type,status:'new',note:''});
+  saveGlobal();renderProspects();updateDashboard();
+}
+function delProspect(i){gData.prospects.splice(i,1);saveGlobal();renderProspects();updateDashboard();}
+
+function renderProjects(){
+  const el=document.getElementById('project-list');
+  el.innerHTML='';
+  if(gData.projects.length === 0) {
+    el.innerHTML = '<div class="col-span-full text-sm text-slate-400 p-8 text-center border border-dashed border-slate-200 rounded-xl">Aucun projet actif.</div>';
+    return;
+  }
+  const now=new Date();
+  gData.projects.forEach((p,i)=>{
+    const dead=new Date(p.deadline);
+    const diff=Math.round((dead-now)/86400000);
+    const status=diff<0?'late':diff<=2?'warn':'ok';
+    const statusLabel=diff<0?`${Math.abs(diff)}j de retard`:diff===0?"Aujourd'hui":`J-${diff}`;
+    const dotClass={'ok':'bg-success','warn':'bg-warn','late':'bg-danger'}[status];
+    const textClass={'ok':'text-success','warn':'text-warn','late':'text-danger'}[status];
+    const borderClass={'ok':'border-slate-200','warn':'border-warn/30','late':'border-danger/30'}[status];
+    
+    const pct=Math.round((p.steps.filter(Boolean).length/p.steps.length)*100);
+    
+    const d=document.createElement('div');
+    d.className=`bg-white border ${borderClass} rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow relative group`;
+    
+    const stepsHtml = p.steps.map((done,si)=>`
+      <div class="flex items-center gap-3 text-sm cursor-pointer py-1.5 px-2 -mx-2 rounded-lg hover:bg-slate-50 transition-colors" onclick="toggleStep(${i},${si})">
+        <div class="w-4 h-4 rounded border flex items-center justify-center transition-colors flex-shrink-0 ${done?'bg-success border-success text-white':'border-slate-300'}">
+           ${done?'<i class="ph-bold ph-check text-[10px]"></i>':''}
+        </div>
+        <span class="${done?'text-slate-400 line-through':'text-slate-700 font-medium'}">${['Brief validé','Moodboard envoyé','1ère proposition','Retours intégrés','Livraison finale','Témoignage'][si]}</span>
+      </div>`).join('');
+
+    d.innerHTML=`
+      <div class="flex items-start justify-between mb-4">
+        <div>
+          <h4 class="font-bold text-slate-900 text-lg">${p.client}</h4>
+          <p class="text-xs text-slate-500 mt-0.5">Offre Signature</p>
+        </div>
+        <button class="text-slate-400 hover:text-danger p-1 opacity-0 group-hover:opacity-100 transition-opacity" onclick="delProject(${i})">
+          <i class="ph-bold ph-trash text-lg"></i>
+        </button>
+      </div>
+      
+      <div class="flex items-center gap-2 mb-4 px-3 py-2 bg-slate-50 rounded-lg w-fit">
+        <div class="w-2 h-2 rounded-full ${dotClass}"></div>
+        <span class="text-xs font-bold ${textClass}">Deadline: ${p.deadline} (${statusLabel})</span>
+      </div>
+
+      <div class="space-y-1 mb-5">
+        ${stepsHtml}
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+          <div class="h-full bg-slate-800 rounded-full transition-all duration-500" style="width:${pct}%"></div>
+        </div>
+        <span class="text-xs font-bold text-slate-700 w-8 text-right">${pct}%</span>
+      </div>
+    `;
+    el.appendChild(d);
+  });
+}
+
+function addProject(){
+  const client=prompt('Nom du client ?');if(!client)return;
+  const deadline=prompt('Deadline (YYYY-MM-DD) ?')||new Date(Date.now()+10*86400000).toISOString().split('T')[0];
+  gData.projects.unshift({client,deadline,steps:[false,false,false,false,false,false]});
+  saveGlobal();renderProjects();updateDashboard();
+}
+function delProject(i){gData.projects.splice(i,1);saveGlobal();renderProjects();updateDashboard();}
+function toggleStep(pi,si){gData.projects[pi].steps[si]=!gData.projects[pi].steps[si];saveGlobal();renderProjects();updateDashboard();}
+
+function calcBilan(){
+  const posts=+document.getElementById('inp-posts').value;
+  const msgs=+document.getElementById('inp-msgs').value;
+  const replies=+document.getElementById('inp-replies').value;
+  const calls=+document.getElementById('inp-calls').value;
+  const late=+document.getElementById('inp-late').value;
+  
+  let score=0;
+  if(posts>=3)score++;
+  if(msgs>=10)score++;
+  if(replies>=3)score++;
+  if(calls>=1)score++;
+  if(late===0)score++;
+  
+  const scoreEl = document.getElementById('bilan-score');
+  scoreEl.textContent=score+'/5';
+  
+  scoreEl.className = `text-6xl font-bold tracking-tight mb-2 transition-colors ${score>=4?'text-success':score>=2?'text-warn':'text-danger'}`;
+  
+  state.kpis={posts,msgs,replies,calls,late};
+  saveState();
+  updateDashboard();
+}
+
+function saveBilan(){
+  const wins=document.getElementById('note-wins').value;
+  const blocks=document.getElementById('note-blocks').value;
+  const next=document.getElementById('note-next').value;
+  const score=document.getElementById('bilan-score').textContent;
+  
+  const item={week:weekNum,score,wins,blocks,next,date:new Date().toLocaleDateString('fr-FR')};
+  gData.bilanHistory=gData.bilanHistory.filter(b=>b.week!==weekNum);
+  gData.bilanHistory.unshift(item);
+  saveGlobal();
+  renderBilanHistory();
+  
+  const btn=document.getElementById('save-btn');
+  btn.innerHTML='Sauvegardé <i class="ph-bold ph-check"></i>';
+  btn.classList.add('bg-success', 'hover:bg-emerald-600');
+  btn.classList.remove('bg-brand', 'hover:bg-brandHover');
+  
+  setTimeout(()=>{
+    btn.innerHTML='Sauvegarder le bilan <i class="ph ph-arrow-up-right font-bold"></i>';
+    btn.classList.remove('bg-success', 'hover:bg-emerald-600');
+    btn.classList.add('bg-brand', 'hover:bg-brandHover');
+  }, 2000);
+}
+
+function renderBilanHistory(){
+  const el=document.getElementById('bilan-history');
+  if(!gData.bilanHistory.length){
+    el.innerHTML='<div class="text-sm text-slate-400 p-4 text-center border border-dashed border-slate-200 rounded-lg">Aucun bilan historique.</div>';
+    return;
+  }
+  el.innerHTML=gData.bilanHistory.slice(0,5).map(b=>{
+    const numScore = parseInt(b.score.split('/')[0]);
+    const scoreColor = numScore >= 4 ? 'text-success bg-success/10' : numScore >= 2 ? 'text-warn bg-warn/10' : 'text-danger bg-danger/10';
+    return `
+      <div class="p-4 bg-slate-50 border border-slate-100 rounded-xl text-sm">
+        <div class="flex items-center justify-between mb-3">
+          <div class="font-bold text-slate-800">Semaine ${b.week} <span class="text-slate-400 font-normal ml-2 text-xs">${b.date}</span></div>
+          <div class="px-2 py-1 rounded-md font-bold text-xs ${scoreColor}">${b.score}</div>
+        </div>
+        ${b.wins?`<div class="mt-2 flex gap-2"><i class="ph-bold ph-check text-success mt-0.5"></i><span class="text-slate-600">${b.wins}</span></div>`:''}
+        ${b.next?`<div class="mt-2 flex gap-2"><i class="ph-bold ph-arrow-right text-brand mt-0.5"></i><span class="text-slate-900 font-medium">${b.next}</span></div>`:''}
+      </div>`
+  }).join('');
+}
+
+function updateDashboard(){
+  const k=state.kpis||{};
+  const posts=k.posts||0, msgs=k.msgs||0, replies=k.replies||0, calls=k.calls||0, late=k.late||0;
+  
+  document.getElementById('kpi-posts').textContent=posts;
+  document.getElementById('kpi-msgs').textContent=msgs;
+  document.getElementById('kpi-late').textContent=late;
+  document.getElementById('kpi-replies').textContent=replies;
+  document.getElementById('kpi-calls').textContent=calls;
+  
+  document.getElementById('bar-posts').style.width=Math.min(100,Math.round(posts/3*100))+'%';
+  document.getElementById('bar-msgs').style.width=Math.min(100,Math.round(msgs/10*100))+'%';
+  document.getElementById('bar-late').style.width=late>0?'100%':'0%';
+  document.getElementById('bar-replies').style.width=Math.min(100,Math.round(replies/3*100))+'%';
+  document.getElementById('bar-calls').style.width=Math.min(100,Math.round(calls/1*100))+'%';
+
+  const contentDone=CONTENT_TASKS.filter(t=>state.tasks[t.id]).length;
+  const prospectDone=PROSPECT_TASKS.filter(t=>state.tasks[t.id]).length;
+  const clientDone=CLIENT_TASKS.filter(t=>state.tasks[t.id]).length;
+  
+  const pp=document.getElementById('pillar-progress');
+  pp.innerHTML=`
+    <div class="flex items-center gap-4">
+      <span class="text-sm font-medium text-slate-600 w-24">Contenu</span>
+      <div class="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
+        <div class="h-full bg-success transition-all duration-500" style="width:${Math.round(contentDone/CONTENT_TASKS.length*100)}%"></div>
+      </div>
+      <span class="text-sm font-bold text-slate-900 w-10 text-right">${contentDone}/${CONTENT_TASKS.length}</span>
+    </div>
+    <div class="flex items-center gap-4">
+      <span class="text-sm font-medium text-slate-600 w-24">Prospection</span>
+      <div class="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
+        <div class="h-full bg-brand transition-all duration-500" style="width:${Math.round(prospectDone/PROSPECT_TASKS.length*100)}%"></div>
+      </div>
+      <span class="text-sm font-bold text-slate-900 w-10 text-right">${prospectDone}/${PROSPECT_TASKS.length}</span>
+    </div>
+    <div class="flex items-center gap-4">
+      <span class="text-sm font-medium text-slate-600 w-24">Clients</span>
+      <div class="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
+        <div class="h-full bg-warn transition-all duration-500" style="width:${Math.round(clientDone/CLIENT_TASKS.length*100)}%"></div>
+      </div>
+      <span class="text-sm font-bold text-slate-900 w-10 text-right">${clientDone}/${CLIENT_TASKS.length}</span>
+    </div>
+  `;
+}
+
+function syncBilanInputs(){
+  const k=state.kpis||{};
+  ['posts','msgs','replies','calls','late'].forEach(f=>{
+    const el=document.getElementById('inp-'+f);
+    if(el)el.value=k[f]||0;
+  });
+  
+  const b=gData.bilanHistory.find(x=>x.week===weekNum);
+  if(b){
+    document.getElementById('note-wins').value=b.wins||'';
+    document.getElementById('note-blocks').value=b.blocks||'';
+    document.getElementById('note-next').value=b.next||'';
+    document.getElementById('bilan-score').textContent=b.score||'—';
+  } else {
+    document.getElementById('note-wins').value='';
+    document.getElementById('note-blocks').value='';
+    document.getElementById('note-next').value='';
+    document.getElementById('bilan-score').textContent='—';
+  }
+}
+
+function renderAll(){
+  renderTasks('content-tasks',CONTENT_TASKS);
+  renderTasks('prospect-tasks',PROSPECT_TASKS);
+  renderTasks('client-tasks',CLIENT_TASKS);
+  renderTopics();
+  renderProspects();
+  renderProjects();
+  updateDashboard();
+  syncBilanInputs();
+  calcBilan();
+  renderBilanHistory();
+}
+
+function showTab(name, btnElement){
+  // Update Buttons
+  const tabs = document.querySelectorAll('.tab');
+  tabs.forEach(t => {
+    t.classList.remove('active', 'bg-white', 'shadow-sm', 'text-slate-900');
+    t.classList.add('text-slate-600');
+  });
+  
+  if (btnElement) {
+    btnElement.classList.add('active', 'bg-white', 'shadow-sm', 'text-slate-900');
+    btnElement.classList.remove('text-slate-600');
+  } else {
+    // default to first tab (used on load)
+    tabs[0].classList.add('active', 'bg-white', 'shadow-sm', 'text-slate-900');
+    tabs[0].classList.remove('text-slate-600');
+  }
+
+  // Update Sections
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+// Initialize
+async function initApp() {
+  await loadAllData(weekNum);
+  renderAll();
+}
+
+initApp();
+
+// Set initial tab styling
+showTab('dashboard', document.querySelector('.tab'));
+
+</script>
+</body>
+</html>
